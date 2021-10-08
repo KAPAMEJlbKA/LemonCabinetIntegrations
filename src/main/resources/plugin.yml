@@ -1,0 +1,13 @@
+name: SimpleCabinet
+version: '${project.version}'
+main: simplecabinet.bukkit.SimpleCabinetPlugin
+api-version: 1.15
+commands:
+  shop:
+    description: Get shopping orders.
+    usage: /<command> get|all
+    aliases: [ ]
+  economy:
+    description: Economy
+    usage: /<command> transfer|other
+    aliases: [ eco, money ]
