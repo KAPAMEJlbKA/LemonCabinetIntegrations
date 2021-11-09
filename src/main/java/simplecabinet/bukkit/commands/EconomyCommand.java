@@ -72,6 +72,10 @@ public class EconomyCommand implements CommandExecutor {
                 return true;
             }
         } else if(args[0].equals("balance")) {
+            if(!player.hasPermission("simplecabinet.commands.economy.balance")) {
+                sender.sendMessage("Permissions denied");
+                return true;
+            }
             String currency = plugin.config.economy.defaultCurrency;
             sender.sendMessage(String.format("Balance %.2f %s", economy.getBalance(player.getUniqueId(), currency), currency));
             return true;
