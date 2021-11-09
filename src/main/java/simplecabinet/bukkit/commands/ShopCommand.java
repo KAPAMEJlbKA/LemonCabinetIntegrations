@@ -33,7 +33,15 @@ public class ShopCommand implements CommandExecutor {
         if(args.length == 0) {
             return false;
         }
+        if(!player.hasPermission("simplecabinet.commands.shop")) {
+            sender.sendMessage("Permissions denied");
+            return true;
+        }
         if(args[0].equals("all")) {
+            if(!player.hasPermission("simplecabinet.commands.shop.all")) {
+                sender.sendMessage("Permissions denied");
+                return true;
+            }
             try {
                 Type type = new TypeToken<PageDto<ItemDeliveryDto>>() {}.getType();
                 SimpleCabinetResponse<PageDto<ItemDeliveryDto>> result = plugin.api.adminGet(String.format("admin/delivery/user/%s/0", username), type);

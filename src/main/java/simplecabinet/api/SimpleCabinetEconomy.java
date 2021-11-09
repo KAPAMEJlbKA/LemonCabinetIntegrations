@@ -96,105 +96,72 @@ public class SimpleCabinetEconomy {
         return true;
     }
 
-    private BalanceTransactionDto transferInternal(long fromBalanceId, long toBalanceId, double count, boolean self, String comment, boolean multicurrency) throws SimpleCabinetAPI.SimpleCabinetException {
-        TransferMoneyRequest request = new TransferMoneyRequest(fromBalanceId, toBalanceId, count, self, comment, multicurrency);
-        SimpleCabinetResponse<BalanceTransactionDto> result = api.adminPost("/admin/money/transfer", request, BalanceTransactionDto.class);
-        return result.getOrThrow();
-    }
-
-    public BalanceTransactionDto transfer(long fromBalanceId, long toBalanceId, double count, boolean self, String comment, boolean multicurrency) throws SimpleCabinetAPI.SimpleCabinetException {
-        BalanceTransactionDto dto = transferInternal(fromBalanceId, toBalanceId, count, self, comment, multicurrency);
-        updateCachedBalance(fromBalanceId, dto.fromCount);
-        updateCachedBalance(fromBalanceId, dto.toCount);
-        return dto;
-    }
-
-    public BalanceTransactionDto transfer(UUID fromPlayerUUID, String fromCurrency, UUID toPlayerUUID, String toCurrency, double count, boolean self, String comment, boolean multicurrency) throws SimpleCabinetAPI.SimpleCabinetException {
-        long fromBalanceId = getBalanceId(fromPlayerUUID, fromCurrency);
-        if(fromBalanceId < 0) {
-            throw new SimpleCabinetAPI.SimpleCabinetException("'From' balance not found");
-        }
-        long toBalanceId = getBalanceId(toPlayerUUID, toCurrency);
-        if(toBalanceId < 0) {
-            throw new SimpleCabinetAPI.SimpleCabinetException("'Target' balance not found");
-        }
-        BalanceTransactionDto dto = transferInternal(fromBalanceId, toBalanceId, count, self, comment, multicurrency);
+    public BalanceTransactionDto transfer(UUID fromPlayerUUID, String fromCurrency, UUID toPlayerUUID, String toCurrency, double count, boolean self, String comment, boolean strictRate) throws SimpleCabinetAPI.SimpleCabinetException {
+        TransferMoneyRequest request = new TransferMoneyRequest(count, self, comment, strictRate);
+        SimpleCabinetResponse<BalanceTransactionDto> result = api.adminPost(
+                String.format("/admin/money/transfer/byuuid/%s/%s/to/%s/%s", fromPlayerUUID, fromCurrency, toPlayerUUID, toCurrency),
+                request, BalanceTransactionDto.class);
+        BalanceTransactionDto dto = result.getOrThrow();
         updateCachedBalance(fromPlayerUUID, fromCurrency, dto.fromCount);
         updateCachedBalance(toPlayerUUID, toCurrency, dto.toCount);
         return dto;
     }
 
-    private BalanceTransactionDto addMoneyInternal(long balanceId, double count, String comment) throws SimpleCabinetAPI.SimpleCabinetException {
-        AddMoneyRequest request = new AddMoneyRequest(balanceId, count, comment);
-        SimpleCabinetResponse<BalanceTransactionDto> result = api.adminPost("/admin/money/addmoney", request, BalanceTransactionDto.class);
-        return result.getOrThrow();
-    }
-
     public BalanceTransactionDto addMoney(UUID playerUUID, String currency, double count, String comment) throws SimpleCabinetAPI.SimpleCabinetException {
-        long balanceId = getBalanceId(playerUUID, currency);
-        if(balanceId < 0) {
-            throw new SimpleCabinetAPI.SimpleCabinetException("'Target' balance not found");
-        }
-        BalanceTransactionDto dto = addMoneyInternal(balanceId, count, comment);
+        AddMoneyRequest request = new AddMoneyRequest(count, comment);
+        SimpleCabinetResponse<BalanceTransactionDto> result = api.adminPost(
+                String.format("/admin/money/addmoney/byuuid/%s/%s", playerUUID, currency), request, BalanceTransactionDto.class);
+        BalanceTransactionDto dto = result.getOrThrow();
         updateCachedBalance(playerUUID, currency, dto.fromCount);
         return dto;
     }
 
     public BalanceTransactionDto addMoney(long balanceId, double count, String comment) throws SimpleCabinetAPI.SimpleCabinetException {
-        BalanceTransactionDto dto = addMoneyInternal(balanceId, count, comment);
+        AddMoneyRequest request = new AddMoneyRequest(count, comment);
+        SimpleCabinetResponse<BalanceTransactionDto> result = api.adminPost(
+                String.format("/admin/money/addmoney/unchecked/%d", balanceId), request, BalanceTransactionDto.class);
+        BalanceTransactionDto dto = result.getOrThrow();
         updateCachedBalance(balanceId, dto.fromCount);
         return dto;
     }
 
-    private BalanceTransactionDto removeMoneyInternal(long balanceId, double count, String comment) throws SimpleCabinetAPI.SimpleCabinetException {
-        AddMoneyRequest request = new AddMoneyRequest(balanceId, count, comment);
-        SimpleCabinetResponse<BalanceTransactionDto> result = api.adminPost("/admin/money/removemoney", request, BalanceTransactionDto.class);
-        BalanceTransactionDto dto = result.getOrThrow();
-        updateCachedBalance(balanceId, -dto.fromCount);
-        return dto;
-    }
-
     public BalanceTransactionDto removeMoney(UUID playerUUID, String currency, double count, String comment) throws SimpleCabinetAPI.SimpleCabinetException {
-        long balanceId = getBalanceId(playerUUID, currency);
-        if(balanceId < 0) {
-            throw new SimpleCabinetAPI.SimpleCabinetException("'Target' balance not found");
-        }
-        BalanceTransactionDto dto = removeMoneyInternal(balanceId, count, comment);
+        AddMoneyRequest request = new AddMoneyRequest(count, comment);
+        SimpleCabinetResponse<BalanceTransactionDto> result = api.adminPost(
+                String.format("/admin/money/removemoney/byuuid/%s/%s", playerUUID, currency), request, BalanceTransactionDto.class);
+        BalanceTransactionDto dto = result.getOrThrow();
         updateCachedBalance(playerUUID, currency, dto.fromCount);
         return dto;
     }
 
     public BalanceTransactionDto removeMoney(long balanceId, double count, String comment) throws SimpleCabinetAPI.SimpleCabinetException {
-        BalanceTransactionDto dto = removeMoneyInternal(balanceId, count, comment);
+        AddMoneyRequest request = new AddMoneyRequest(count, comment);
+        SimpleCabinetResponse<BalanceTransactionDto> result = api.adminPost(
+                String.format("/admin/money/removemoney/unchecked/%d", balanceId), request, BalanceTransactionDto.class);
+        BalanceTransactionDto dto = result.getOrThrow();
         updateCachedBalance(balanceId, dto.fromCount);
         return dto;
     }
 
     public static class TransferMoneyRequest {
-        public long fromBalanceId;
-        public long toBalanceId;
         public double count;
         public boolean selfUser;
         public String comment;
-        public boolean multicurrency;
+        public boolean strictRate;
 
-        public TransferMoneyRequest(long fromBalanceId, long toBalanceId, double count, boolean selfUser, String comment, boolean multicurrency) {
-            this.fromBalanceId = fromBalanceId;
-            this.toBalanceId = toBalanceId;
+        public TransferMoneyRequest(double count, boolean selfUser, String comment, boolean strictRate) {
             this.count = count;
             this.selfUser = selfUser;
             this.comment = comment;
-            this.multicurrency = multicurrency;
+            this.strictRate = strictRate;
         }
     }
 
     public static class AddMoneyRequest {
-        public long balanceId;
         public double count;
         public String comment;
 
-        public AddMoneyRequest(long balanceId, double count, String comment) {
-            this.balanceId = balanceId;
+        public AddMoneyRequest(double count, String comment) {
             this.count = count;
             this.comment = comment;
         }

@@ -28,16 +28,24 @@ public class EconomyCommand implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if(!(sender instanceof Player)) {
             sender.sendMessage("Only player can use this command");
-            return false;
+            return true;
         }
         Player player = (Player) sender;
         String username = player.getName();
         if(args.length == 0) {
             return false;
         }
+        if(!player.hasPermission("simplecabinet.commands.economy")) {
+            sender.sendMessage("Permissions denied");
+            return true;
+        }
         if(args[0].equals("transfer")) {
             if(args.length < 3) {
                 sender.sendMessage("Use: /economy transfer [playerName] [amount] (comment)");
+                return true;
+            }
+            if(!player.hasPermission("simplecabinet.commands.economy.transfer")) {
+                sender.sendMessage("Permissions denied");
                 return true;
             }
             UUID targetUUID;
