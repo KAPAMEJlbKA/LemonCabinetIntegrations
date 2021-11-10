@@ -26,9 +26,6 @@ public interface NBTHelper {
         if(isModernNBTLoaded()) {
             return new ModernNBTHelper();
         }
-        if(isPowerNBTLoaded()) {
-            return new PowerNBTHelper();
-        }
         return new ItemMetaNBTHelper();
     }
 }
