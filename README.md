@@ -1,4 +1,9 @@
-# SimpleCabinetBukkitPlugin
+# SimpleCabinetIntegrations
+# Fabric Mod
+Мод для Fabric для интеграции с SimpleCabinet
+#### Возможности
+- Выдача предметов с поддержкой NBT
+# Bukkit Plugin
 Плагин Bukkit для интеграции с SimpleCabinet
 #### Возможности
 - Интеграция с Vault(экономика)

@@ -1,0 +1,34 @@
+{
+	"schemaVersion": 1,
+	"id": "simplecabinet-fabric-integration",
+	"version": "${version}",
+	"name": "SimpleCabinet Fabric Integration",
+	"description": "This is an example description! Tell everyone what your mod is about!",
+	"authors": [
+		"Me!"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "MIT",
+	"icon": "assets/simplecabinet-fabric-integration/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+          "simplecabinet.fabric.SimpleCabinetMod"
+		]
+	},
+	"mixins": [
+		"simplecabinet-fabric-integration.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.14.14",
+		"minecraft": ">=1.20.0",
+		"java": ">=17",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}
