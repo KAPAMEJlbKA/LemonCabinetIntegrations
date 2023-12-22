@@ -63,7 +63,7 @@ public class SimpleCabinetMod implements ModInitializer {
 		api = new SimpleCabinetAPI(CONFIG.url, CONFIG.token);
 		economy = new SimpleCabinetEconomy(api);
 		if(CONFIG.testOnStartup) {
-			UserDto result = api.<UserDto>adminGet("auth/userinfo", UserDto.class).getOrThrow();
+			UserDto result = api.<UserDto>adminGet("/auth/userinfo", UserDto.class).getOrThrow();
 			LOGGER.info(String.format("Logged-in %s", result.username));
 		}
 		CommandRegistrationCallback.EVENT.register((dispatcher, register, env) -> {
