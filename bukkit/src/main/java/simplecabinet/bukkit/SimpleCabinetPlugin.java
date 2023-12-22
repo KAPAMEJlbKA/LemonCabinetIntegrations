@@ -39,7 +39,7 @@ public final class SimpleCabinetPlugin extends JavaPlugin {
             }
             api = new SimpleCabinetAPI(config.url, config.token);
             if(config.testOnStartup) {
-                UserDto result = api.<UserDto>adminGet("auth/userinfo", UserDto.class).getOrThrow();
+                UserDto result = api.<UserDto>adminGet("/auth/userinfo", UserDto.class).getOrThrow();
                 logger.info(String.format("Logged-in %s", result.username));
             }
             getCommand("shop").setExecutor(new ShopCommand(this));
