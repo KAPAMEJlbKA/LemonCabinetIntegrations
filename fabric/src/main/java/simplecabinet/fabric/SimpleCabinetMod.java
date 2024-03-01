@@ -96,7 +96,10 @@ public class SimpleCabinetMod implements ModInitializer {
 				player.sendMessage(Text.of(String.format("Balance %.2f %s", economy.getBalance(player.getUuid(), currency), currency)));
 				return 1;
 			}))
-					.then(literal("transfer").requires(Permissions.require("simplecabinet.economy.transfer")).then(argument("user", EntityArgumentType.player())).then(argument("amount", IntegerArgumentType.integer(1)).then(argument("comment", StringArgumentType.string()))).executes(context -> {
+					.then(literal("transfer").requires(Permissions.require("simplecabinet.economy.transfer"))
+									.then(argument("user", EntityArgumentType.player())
+									.then(argument("amount", IntegerArgumentType.integer(1))
+									.then(argument("comment", StringArgumentType.string()).executes(context -> {
 						String currency = CONFIG.defaultCurrency;
 						PlayerEntity player = context.getSource().getPlayerOrThrow();
 						PlayerEntity target = EntityArgumentType.getPlayer(context, "user");
@@ -110,7 +113,7 @@ public class SimpleCabinetMod implements ModInitializer {
 							player.sendMessage(Text.of(String.format("Transaction aborted: %s", e.getMessage())));
 						}
 						return 1;
-					})));
+					}))))));
 		});
 	}
 
