@@ -34,7 +34,7 @@ jobs:
       uses: gradle/actions/setup-gradle@v3
 
     - name: Build with Gradle Wrapper
-      run: ./gradlew build
+      run: ./gradlew fabric:build bukkit:fatJar
 
     # NOTE: The Gradle Wrapper is the default and recommended way to run Gradle (https://docs.gradle.org/current/userguide/gradle_wrapper.html).
     # If your project does not have the Gradle Wrapper configured, you can use the following configuration to run Gradle with a specified version.
@@ -49,19 +49,13 @@ jobs:
     - name: Upload a Build Artifact (bukkit)
       uses: actions/upload-artifact@v4.3.1
       with:
-    # Artifact name
         name: simplecabinet-integration-bukkit.jar
-    # A file, directory or wildcard pattern that describes what to upload
-        path: bukkit/build/libs/bukkit-1.0-SNAPSHOT.jar
-    # The desired behavior if no files are found using the provided path.
+        path: bukkit/build/libs/bukkit-1.0-SNAPSHOT-fat.jar
     - name: Upload a Build Artifact (fabric)
       uses: actions/upload-artifact@v4.3.1
       with:
-    # Artifact name
         name: simplecabinet-integration-fabric.jar
-    # A file, directory or wildcard pattern that describes what to upload
         path: fabric/build/libs/simplecabinet-fabric-integration-1.0.1.jar
-    # The desired behavior if no files are found using the provided path.
 
   dependency-submission:
 
