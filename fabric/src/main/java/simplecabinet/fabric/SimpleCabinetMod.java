@@ -73,8 +73,7 @@ public class SimpleCabinetMod implements ModInitializer {
 						Type type = new TypeToken<PageDto<ItemDeliveryDto>>() {}.getType();
 						SimpleCabinetResponse<PageDto<ItemDeliveryDto>> result = api.adminGet(String.format("admin/delivery/user/%s/0", player.getGameProfile().getName()), type);
 						if(!result.isSuccess()) {
-							System.out.println(result.error);
-							player.sendMessage(Text.of("Failed (1)"));
+							player.sendMessage(Text.of(String.format("Failed: %s", result.error)));
 							return 1;
 						}
 						PageDto<ItemDeliveryDto> list = result.getOrThrow();

@@ -31,15 +31,15 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.spigotmc:spigot-api:1.19.3-R0.1-SNAPSHOT'
+    implementation 'org.spigotmc:spigot-api:1.20.4-R0.1-SNAPSHOT'
     shade(project(":common"))
     implementation 'com.github.MilkBowl:VaultAPI:1.7'
-    implementation 'de.tr7zw:item-nbt-api-plugin:2.8.0'
+    implementation 'de.tr7zw:item-nbt-api-plugin:2.12.3'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
 }
 
-tasks.register('farJar', Jar) {
+tasks.register('fatJar', Jar) {
     archiveClassifier = 'fat'
 
     from sourceSets.main.output
