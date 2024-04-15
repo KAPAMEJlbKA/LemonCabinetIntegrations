@@ -1,13 +1,13 @@
 package simplecabinet.api;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
+import com.google.gson.*;
 
 import java.io.*;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.logging.Logger;
 
 public class SimpleCabinetAPI {
@@ -16,7 +16,6 @@ public class SimpleCabinetAPI {
     private final String baseUrl;
     private final String token;
     private final Gson gson;
-
     public <R> SimpleCabinetResponse<R> get(String url, Type typeOfResult) throws SimpleCabinetException {
         return request("GET", url, null, typeOfResult, null);
     }
@@ -107,7 +106,19 @@ public class SimpleCabinetAPI {
         this.token = token;
         this.gson = new GsonBuilder().create();
     }
+    public final class LocalDateTimeTypeAdapter implements JsonSerializer<LocalDateTime>, JsonDeserializer<LocalDateTime> {
+        private final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
+        @Override
+        public JsonElement serialize(LocalDateTime src, Type typeOfSrc, JsonSerializationContext context) {
+            return new JsonPrimitive(src.format(FORMATTER));
+        }
+
+        @Override
+        public LocalDateTime deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            return LocalDateTime.parse(json.getAsString(), FORMATTER);
+        }
+    }
 
     public static class SimpleCabinetException extends RuntimeException {
         public SimpleCabinetException() {
@@ -125,4 +136,5 @@ public class SimpleCabinetAPI {
             super(throwable);
         }
     }
+
 }

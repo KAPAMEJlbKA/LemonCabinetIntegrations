@@ -13,18 +13,16 @@ import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import simplecabinet.api.SimpleCabinetAPI;
 import simplecabinet.api.SimpleCabinetEconomy;
+import simplecabinet.api.SimpleCabinetPing;
 import simplecabinet.api.SimpleCabinetResponse;
-import simplecabinet.api.dto.BalanceTransactionDto;
-import simplecabinet.api.dto.ItemDeliveryDto;
-import simplecabinet.api.dto.PageDto;
-import simplecabinet.api.dto.UserDto;
+import simplecabinet.api.dto.*;
 
 import java.io.*;
 import java.lang.reflect.Type;
@@ -40,15 +38,13 @@ public class SimpleCabinetMod implements ModInitializer {
 	public static final Logger LOGGER = LoggerFactory.getLogger("simplecabinet-fabric-integration");
 	public static Config CONFIG;
 	public static SimpleCabinetAPI api;
+
 	public static SimpleCabinetEconomy economy;
 
 	public static Gson configGson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
 	@Override
 	public void onInitialize() {
-		// This code runs as soon as Minecraft is in a mod-load-ready state.
-		// However, some things (like resources) may still be uninitialized.
-		// Proceed with mild caution.
 
 		LOGGER.info("SimpleCabinet Integrations");
 		try {
@@ -62,11 +58,33 @@ public class SimpleCabinetMod implements ModInitializer {
 		}
 		api = new SimpleCabinetAPI(CONFIG.url, CONFIG.token);
 		economy = new SimpleCabinetEconomy(api);
+
 		if(CONFIG.testOnStartup) {
 			UserDto result = api.<UserDto>adminGet("/auth/userinfo", UserDto.class).getOrThrow();
 			LOGGER.info(String.format("Logged-in %s", result.username));
 		}
-		CommandRegistrationCallback.EVENT.register((dispatcher, register, env) -> {
+        String serverName = CONFIG.serverName; // Получаем имя сервера из конфигурации
+        String serverFromServer =CONFIG.serverName ;// Код для получения имени сервера с сервера
+        api.adminPost("/servers/new", new ServerRequest(serverName, serverFromServer), ServersDto.class).getOrThrow();
+
+        CommandRegistrationCallback.EVENT.register((dispatcher, register, env) -> {
+			dispatcher.register(literal("ping")
+					.executes(context -> {
+						ServerPlayerEntity player = context.getSource().getPlayerOrThrow();
+
+						// Получаем текущее количество игроков на сервере
+						int currentPlayerCount = player.getServer().getCurrentPlayerCount();
+
+						// Получаем максимально возможное количество игроков на сервере
+						int maxPlayerCount = player.getServer().getMaxPlayerCount();
+
+						// Отправляем информацию на API SimpleCabinet
+						api.adminPost(String.format("/servers/name/%s/ping",CONFIG.serverName), new SimpleCabinetPing.PingRequest(currentPlayerCount, maxPlayerCount), ServersDto.PingResponseDto.class).getOrThrow();
+
+						player.sendMessage(Text.of(String.format("Current Players: %d, Max Players: %d", currentPlayerCount, maxPlayerCount)));
+
+						return 1;
+					}));
 			dispatcher.register(literal("shop").then(literal("all").requires(Permissions.require("simplecabinet.shop.all"))
 					.executes(context -> {
 						ServerPlayerEntity player = context.getSource().getPlayerOrThrow();
@@ -88,6 +106,7 @@ public class SimpleCabinetMod implements ModInitializer {
 						player.sendMessage(Text.of(String.format("Gived %d/%d items", list.data.size(), list.totalElements)));
 						return 1;
 					})));
+			
 			dispatcher.register(literal("economy")
 					.then(literal("balance").requires(Permissions.require("simplecabinet.economy.balance")).executes(context -> {
 				String currency = CONFIG.defaultCurrency;
@@ -136,4 +155,15 @@ public class SimpleCabinetMod implements ModInitializer {
 			this.deliveredPart = deliveredPart;
 		}
 	}
+	public static class ServerRequest {
+		public String name;
+		public String displayName;
+
+		public ServerRequest(String serverName, String serverFromServer) {
+			this.name = serverName;
+			this.displayName = serverFromServer;
+		}
+	}
+
 }
+
