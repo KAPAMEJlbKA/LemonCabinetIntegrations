@@ -1,23 +1,32 @@
 package simplecabinet.api;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.util.concurrent.AtomicDouble;
 import simplecabinet.api.dto.BalanceTransactionDto;
 import simplecabinet.api.dto.UserBalanceDto;
 
-import java.util.*;
+import java.io.IOException;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.WeakHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class SimpleCabinetEconomy {
     private final SimpleCabinetAPI api;
-    private final Map<EconomyKey, EconomyValue> economyCache;
+    private final Cache<EconomyKey, EconomyValue> economyCache;
 
     public SimpleCabinetEconomy(SimpleCabinetAPI api) {
         this.api = api;
-        this.economyCache = new HashMap<>();
+        this.economyCache = CacheBuilder.newBuilder()
+                .build();
     }
 
     public double getBalance(UUID playerUUID, String currency) {
         EconomyKey key = new EconomyKey(playerUUID, currency);
-        EconomyValue value = economyCache.get(key);
+        EconomyValue value = economyCache.getIfPresent(key);
         if(value == null) {
             UserBalanceDto balanceDto = fetchBalance(playerUUID, currency);
             if(balanceDto == null) {
@@ -32,21 +41,21 @@ public class SimpleCabinetEconomy {
             value = new EconomyValue(balanceDto);
         }
         economyCache.put(key, value);
-        return value.balance;
+        return value.balance.get();
     }
 
     public double getCachedBalance(UUID playerUUID, String currency) {
         EconomyKey key = new EconomyKey(playerUUID, currency);
-        EconomyValue value = economyCache.get(key);
+        EconomyValue value = economyCache.getIfPresent(key);
         if(value == null) {
             return 0.0;
         }
-        return value.balance;
+        return value.balance.get();
     }
 
     public long getBalanceId(UUID playerUUID, String currency) {
         EconomyKey key = new EconomyKey(playerUUID, currency);
-        EconomyValue value = economyCache.get(key);
+        EconomyValue value = economyCache.getIfPresent(key);
         if(value == null) {
             UserBalanceDto balanceDto = fetchBalance(playerUUID, currency);
             if(balanceDto == null) {
@@ -68,9 +77,9 @@ public class SimpleCabinetEconomy {
     }
 
     private boolean updateCachedBalance(long balanceId, double delta) {
-        for(EconomyValue value : economyCache.values()) {
+        for(EconomyValue value : economyCache.asMap().values()) {
             if(value.id == balanceId) {
-                value.balance += delta;
+                value.balance.addAndGet(delta);
                 return true;
             }
         }
@@ -79,11 +88,11 @@ public class SimpleCabinetEconomy {
 
     private boolean updateCachedBalance(UUID playerUUID, String currency, double delta) {
         EconomyKey key = new EconomyKey(playerUUID, currency);
-        EconomyValue value = economyCache.get(key);
+        EconomyValue value = economyCache.getIfPresent(key);
         if(value == null) {
             return false;
         }
-        value.balance += delta;
+        value.balance.addAndGet(delta);
         return true;
     }
 
@@ -161,24 +170,25 @@ public class SimpleCabinetEconomy {
     private static class EconomyValue {
         public final long id;
         public final String currency;
-        public volatile double balance;
+        public final AtomicDouble balance;
         private final transient AtomicLong lastUpdateTime;
 
         public EconomyValue(long id, String currency, double balance) {
             this.id = id;
             this.currency = currency;
+            this.balance = new AtomicDouble(balance);
             this.lastUpdateTime = new AtomicLong(System.currentTimeMillis());
         }
 
         public EconomyValue(UserBalanceDto balanceDto) {
             this.id = balanceDto.id;
             this.currency = balanceDto.currency;
-            this.balance = balanceDto.balance;
+            this.balance = new AtomicDouble(balanceDto.balance);
             this.lastUpdateTime = new AtomicLong(System.currentTimeMillis());
         }
 
         public boolean isRepresentative() {
-            if(balance == 0) {
+            if(balance.get() == 0) {
                 return System.currentTimeMillis() - lastUpdateTime.get() < 4000;
             }
             return System.currentTimeMillis() - lastUpdateTime.get() < 3000;
