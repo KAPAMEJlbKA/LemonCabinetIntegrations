@@ -11,7 +11,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.logging.Logger;
 
 public class SimpleCabinetAPI {
-    private final boolean DEBUG = true;
+    private final boolean DEBUG = false;
     private final Logger logger = Logger.getLogger("SimpleCabinetAPI");
     private final String baseUrl;
     private final String token;

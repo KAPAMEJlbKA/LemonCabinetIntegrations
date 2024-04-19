@@ -3,18 +3,23 @@ package simplecabinet.fabric;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
-import me.lucko.fabric.api.permissions.v0.Permissions;
-import net.fabricmc.api.ModInitializer;
 
+import me.lucko.fabric.api.permissions.v0.Permissions;
+
+import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.loader.api.FabricLoader;
+
 import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.PlayerManager;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,29 +29,37 @@ import simplecabinet.api.SimpleCabinetPing;
 import simplecabinet.api.SimpleCabinetResponse;
 import simplecabinet.api.dto.*;
 
+import java.awt.*;
 import java.io.*;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static net.minecraft.server.command.CommandManager.*;
 
 public class SimpleCabinetMod implements ModInitializer {
-	// This logger is used to write text to the console and the log file.
-	// It is considered best practice to use your mod id as the logger's name.
-	// That way, it's clear which mod wrote info, warnings, and errors.
-	public static final Logger LOGGER = LoggerFactory.getLogger("simplecabinet-fabric-integration");
+
+	public static final Logger LOGGER = LoggerFactory.getLogger("LemonBrick cabinet integrator");
 	public static Config CONFIG;
 	public static SimpleCabinetAPI api;
-
 	public static SimpleCabinetEconomy economy;
-
 	public static Gson configGson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+	private MinecraftServer server;
 
 	@Override
 	public void onInitialize() {
+		ServerLifecycleEvents.SERVER_STARTED.register(server -> {
+			this.server = server;
+		});
 
-		LOGGER.info("SimpleCabinet Integrations");
+		LOGGER.info("LemonBrick cabinet integrator");
 		try {
 			loadConfig();
 		} catch (IOException e) {
@@ -59,30 +72,31 @@ public class SimpleCabinetMod implements ModInitializer {
 		api = new SimpleCabinetAPI(CONFIG.url, CONFIG.token);
 		economy = new SimpleCabinetEconomy(api);
 
+		ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+		executor.scheduleAtFixedRate(this::sendPlayerCountToAPI, 6000, CONFIG.playerCountUpdateInterval, TimeUnit.MILLISECONDS);
+
 		if(CONFIG.testOnStartup) {
 			UserDto result = api.<UserDto>adminGet("/auth/userinfo", UserDto.class).getOrThrow();
 			LOGGER.info(String.format("Logged-in %s", result.username));
 		}
-        String serverName = CONFIG.serverName; // Получаем имя сервера из конфигурации
-        String serverFromServer =CONFIG.serverName ;// Код для получения имени сервера с сервера
+        String serverName = CONFIG.serverName;
+        String serverFromServer = CONFIG.serverName;
         api.adminPost("/servers/new", new ServerRequest(serverName, serverFromServer), ServersDto.class).getOrThrow();
 
+		ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
+			LOGGER.info("Server is stopping. Cleaning up resources...");
+			executor.shutdown();
+		});
+
         CommandRegistrationCallback.EVENT.register((dispatcher, register, env) -> {
-			dispatcher.register(literal("ping")
+			dispatcher.register(literal("ping").requires(Permissions.require("simplecabinet.server.ping"))
 					.executes(context -> {
 						ServerPlayerEntity player = context.getSource().getPlayerOrThrow();
-
-						// Получаем текущее количество игроков на сервере
 						int currentPlayerCount = player.getServer().getCurrentPlayerCount();
-
-						// Получаем максимально возможное количество игроков на сервере
 						int maxPlayerCount = player.getServer().getMaxPlayerCount();
-
-						// Отправляем информацию на API SimpleCabinet
-						api.adminPost(String.format("/servers/name/%s/ping",CONFIG.serverName), new SimpleCabinetPing.PingRequest(currentPlayerCount, maxPlayerCount), ServersDto.PingResponseDto.class).getOrThrow();
-
-						player.sendMessage(Text.of(String.format("Current Players: %d, Max Players: %d", currentPlayerCount, maxPlayerCount)));
-
+						List<String> users = (List) player.getPlayerListName();
+						api.adminPost(String.format("/servers/name/%s/ping",CONFIG.serverName), new SimpleCabinetPing.PingRequest(currentPlayerCount,maxPlayerCount ,users ), ServersDto.PingResponseDto.class).getOrThrow();
+						player.sendMessage(Text.of(String.format("Current Players: %d, Max Players: %s", currentPlayerCount,users )));
 						return 1;
 					}));
 			dispatcher.register(literal("shop").then(literal("all").requires(Permissions.require("simplecabinet.shop.all"))
@@ -135,6 +149,24 @@ public class SimpleCabinetMod implements ModInitializer {
 		});
 	}
 
+	private void sendPlayerCountToAPI() {
+		if (server != null) {
+			PlayerManager playerManager = server.getPlayerManager();
+			Iterable<ServerPlayerEntity> players = playerManager.getPlayerList();
+			int currentPlayerCount = 0;
+			List<String> playerNames = new ArrayList<>();
+			for (ServerPlayerEntity player : players) {
+				currentPlayerCount++;
+				playerNames.add(player.getGameProfile().getName());
+			}
+			int maxPlayerCount = server.getMaxPlayerCount();
+			LOGGER.info("Send data to Api");
+			api.adminPost(String.format("/servers/name/%s/ping", CONFIG.serverName),
+					new SimpleCabinetPing.PingRequest(currentPlayerCount, maxPlayerCount, playerNames),
+					ServersDto.PingResponseDto.class).getOrThrow();
+		}
+	}
+
 	private void loadConfig() throws IOException {
 		Path path = FabricLoader.getInstance().getConfigDir().resolve("simplecabinet.json");
 		if(!Files.exists(path)) {
@@ -159,11 +191,11 @@ public class SimpleCabinetMod implements ModInitializer {
 		public String name;
 		public String displayName;
 
+
 		public ServerRequest(String serverName, String serverFromServer) {
 			this.name = serverName;
 			this.displayName = serverFromServer;
 		}
 	}
-
 }
 

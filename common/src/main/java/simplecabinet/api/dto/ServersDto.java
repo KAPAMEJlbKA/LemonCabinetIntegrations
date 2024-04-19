@@ -10,10 +10,10 @@ public class ServersDto {
     public final String displayName;
     public final int maxOnline;
     public final int online;
-    public final List<UserDto> users;
+    public final List<String> users;
     public final String updateDate;
 
-    public ServersDto(long id, String name, String displayName, int maxOnline, int online, List<UserDto> users, String updateDate) {
+    public ServersDto(long id, String name, String displayName, int maxOnline, int online, List<String> users, String updateDate) {
         this.id = id;
         this.name = name;
         this.displayName = displayName;
@@ -26,6 +26,7 @@ public class ServersDto {
     public class PingResponseDto {
         private int online;
         private int maxOnline;
+        private List<String> users;
 
         public int getCurrentPlayerCount() {
             return online;
@@ -41,6 +42,14 @@ public class ServersDto {
 
         public void setMaxPlayerCount(int maxOnline) {
             this.maxOnline = maxOnline;
+        }
+
+        public List<String> gePlayerList() {
+            return users;
+        }
+
+        public void setPlayerList(List<String> users) {
+            this.users = users;
         }
     }
 }
