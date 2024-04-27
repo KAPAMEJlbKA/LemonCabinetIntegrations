@@ -113,7 +113,7 @@ public class SimpleCabinetMod implements ModInitializer {
 					.executes(context -> {
 						ServerPlayerEntity player = context.getSource().getPlayerOrThrow();
 						Type type = new TypeToken<PageDto<ItemDeliveryDto>>() {}.getType();
-						SimpleCabinetResponse<PageDto<ItemDeliveryDto>> result = api.adminGet(String.format("admin/delivery/user/%s/0", player.getGameProfile().getName()), type);
+						SimpleCabinetResponse<PageDto<ItemDeliveryDto>> result = api.adminGet(String.format("/admin/delivery/user/%s/0", player.getGameProfile().getName()), type);
 						if(!result.isSuccess()) {
 							try {
 							player.sendMessage(Text.of(String.format(Localizations.getMessage("shop.fall", CONFIG.language), result.error)));
@@ -126,7 +126,7 @@ public class SimpleCabinetMod implements ModInitializer {
 						for(ItemDeliveryDto e : list.data) {
 							var parsed = ItemDeliveryHelper.parse(e);
 							int delivered = ItemDeliveryHelper.delivery(parsed, player, (int) e.part);
-							SimpleCabinetResponse<Void> resultDelivery = api.adminPost(String.format("admin/delivery/id/%d/setpart", e.id), new SetPartRequest(delivered), Void.class);
+							SimpleCabinetResponse<Void> resultDelivery = api.adminPost(String.format("/admin/delivery/id/%d/setpart", e.id), new SetPartRequest(delivered), Void.class);
 							if(!resultDelivery.isSuccess()) {
 								try {
 								LOGGER.warn(String.format(Localizations.getMessage("shop.item.fall", CONFIG.language), e.id));

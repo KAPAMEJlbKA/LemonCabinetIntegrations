@@ -44,7 +44,7 @@ public class ShopCommand implements CommandExecutor {
             }
             try {
                 Type type = new TypeToken<PageDto<ItemDeliveryDto>>() {}.getType();
-                SimpleCabinetResponse<PageDto<ItemDeliveryDto>> result = plugin.api.adminGet(String.format("admin/delivery/user/%s/0", username), type);
+                SimpleCabinetResponse<PageDto<ItemDeliveryDto>> result = plugin.api.adminGet(String.format("/admin/delivery/user/%s/0", username), type);
                 if(!result.isSuccess()) {
                     System.out.println(result.error);
                     sender.sendMessage("Failed (1)");
@@ -53,7 +53,7 @@ public class ShopCommand implements CommandExecutor {
                 PageDto<ItemDeliveryDto> list = result.getOrThrow();
                 for(ItemDeliveryDto e : list.data) {
                     int undelivered = ItemDeliveryHelper.deliveryItemToPlayer(player, e, (int) e.part);
-                    SimpleCabinetResponse<Void> resultDelivery = plugin.api.adminPost(String.format("admin/delivery/id/%d/setpart", e.id), new SetPartRequest(e.part - undelivered), Void.class);
+                    SimpleCabinetResponse<Void> resultDelivery = plugin.api.adminPost(String.format("/admin/delivery/id/%d/setpart", e.id), new SetPartRequest(e.part - undelivered), Void.class);
                     if(!resultDelivery.isSuccess()) {
                         plugin.getLogger().warning(String.format("ItemDelivery %d failed", e.id));
                     }
