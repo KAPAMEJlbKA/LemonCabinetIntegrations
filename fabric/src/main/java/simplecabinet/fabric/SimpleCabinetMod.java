@@ -45,7 +45,7 @@ import static net.minecraft.server.command.CommandManager.*;
 
 public class SimpleCabinetMod implements ModInitializer {
 
-	public static final Logger LOGGER = LoggerFactory.getLogger("LemonBrick cabinet integrator");
+	public static final Logger LOGGER = LoggerFactory.getLogger("simplecabinet-fabric-integration");
 	public static Config CONFIG;
 	public static SimpleCabinetAPI api;
 	public static SimpleCabinetEconomy economy;
@@ -58,7 +58,7 @@ public class SimpleCabinetMod implements ModInitializer {
 		ServerLifecycleEvents.SERVER_STARTED.register(server -> {
 			this.server = server;
 		});
-		LOGGER.info("Lemon brick integrator");
+		LOGGER.info("SimpleCabinet Integrations");
 		try {
 			loadConfig();
 		} catch (IOException e) {
