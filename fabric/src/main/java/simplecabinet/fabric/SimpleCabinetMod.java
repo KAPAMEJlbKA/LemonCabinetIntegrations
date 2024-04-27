@@ -31,7 +31,6 @@ import simplecabinet.api.SimpleCabinetPing;
 import simplecabinet.api.SimpleCabinetResponse;
 import simplecabinet.api.dto.*;
 
-import java.awt.*;
 import java.io.*;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
@@ -41,7 +40,6 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static net.minecraft.server.command.CommandManager.*;
 
@@ -80,6 +78,7 @@ public class SimpleCabinetMod implements ModInitializer {
 			UserDto result = api.<UserDto>adminGet("/auth/userinfo", UserDto.class).getOrThrow();
 			LOGGER.info(String.format("Logged-in %s", result.username));
 		}
+		if(CONFIG.sendDataOnStartup){
         String serverName = CONFIG.serverName;
         String serverFromServer = CONFIG.serverName;
         api.adminPost("/servers/new", new ServerRequest(serverName, serverFromServer), ServersDto.class).getOrThrow();
@@ -89,7 +88,7 @@ public class SimpleCabinetMod implements ModInitializer {
 		ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
 			LOGGER.info("Server is stopping. Cleaning up resources...");
 			executor.shutdown();
-		});
+		});}
 
         CommandRegistrationCallback.EVENT.register((dispatcher, register, env) -> {
 			dispatcher.register(literal("ping").requires(Permissions.require("simplecabinet.admin.server.ping"))
@@ -109,7 +108,8 @@ public class SimpleCabinetMod implements ModInitializer {
                         }
                         return 1;
 					}));
-			dispatcher.register(literal("card").then(literal("all").requires(Permissions.require("economy.card.all"))
+			dispatcher.register(literal("economy").requires(Permissions.require("economy.card.all"))
+					.then(literal("card").then(literal("all").requires(Permissions.require("economy.card.all"))
 					.executes(context -> {
 						ServerPlayerEntity player = context.getSource().getPlayerOrThrow();
 						Type type = new TypeToken<PageDto<ItemDeliveryDto>>() {}.getType();
@@ -141,8 +141,8 @@ public class SimpleCabinetMod implements ModInitializer {
 							throw new RuntimeException(ex);
 						}
 						return 1;
-					})));
-			dispatcher.register(literal("balance").requires(Permissions.require("economy.balance")).executes(context -> {
+					})))
+			.then(literal("balance").requires(Permissions.require("economy.balance")).executes(context -> {
 				String currency = CONFIG.defaultCurrency;
 				PlayerEntity player = context.getSource().getPlayerOrThrow();
 				try {
@@ -151,8 +151,8 @@ public class SimpleCabinetMod implements ModInitializer {
 				throw new RuntimeException(ex);
 			}
 				return 1;
-			}));
-			dispatcher.register(literal("pay").requires(Permissions.require("economy.pay"))
+			}))
+			.then(literal("pay").requires(Permissions.require("economy.pay"))
 									.then(argument("user", EntityArgumentType.player())
 									.then(argument("amount", IntegerArgumentType.integer(1))
 									.then(argument("comment", StringArgumentType.string()).executes(context -> {
@@ -182,8 +182,8 @@ public class SimpleCabinetMod implements ModInitializer {
                             }
                         }
 						return 1;
-					})))));
-			dispatcher.register(literal("cashe").requires(Permissions.require("economy.cashe"))
+					})))))
+					.then(literal("cashe").requires(Permissions.require("economy.cashe"))
 					.then(argument("user", EntityArgumentType.player())
 							.then(argument("amount", IntegerArgumentType.integer(1))
 									.then(argument("comment", StringArgumentType.string()).executes(context -> {
@@ -211,7 +211,7 @@ public class SimpleCabinetMod implements ModInitializer {
 											}
 										}
 										return 1;
-									})))));
+									}))))));
 		});
 	}
 

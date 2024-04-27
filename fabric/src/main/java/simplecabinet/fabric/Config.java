@@ -6,7 +6,7 @@ public class Config {
     public String defaultCurrency = "ECO";
     public String language = "en_us";
     public boolean testOnStartup;
-    public String serverName = "ServerName"; // Добавляем параметр ServerName
-    public int playerCountUpdateInterval = 600; // Добавляем параметр для интервала обновления количества игроков
-
+    public String serverName = "ServerName";
+    public boolean sendDataOnStartup;
+    public int playerCountUpdateInterval = 600;
 }
