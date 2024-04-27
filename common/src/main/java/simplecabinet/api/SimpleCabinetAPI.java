@@ -16,6 +16,7 @@ public class SimpleCabinetAPI {
     private final String baseUrl;
     private final String token;
     private final Gson gson;
+
     public <R> SimpleCabinetResponse<R> get(String url, Type typeOfResult) throws SimpleCabinetException {
         return request("GET", url, null, typeOfResult, null);
     }

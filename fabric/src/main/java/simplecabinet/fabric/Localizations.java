@@ -17,9 +17,7 @@ public class Localizations {
     private static final Map<String, String> RU_RU = new HashMap<>();
     private static final Map<String, Map<String, String>> LANGUAGES = new HashMap<>();
 
-
     static {
-        // Здесь добавьте все текстовые сообщения на английском языке (en_us)
         EN_US.put("startup.loggedIn","Logged-in %s");
         EN_US.put("startup.info.transfer","Server info registered.");
         EN_US.put("server.stop","Server is stopping. Cleaning up resources...");
@@ -35,7 +33,7 @@ public class Localizations {
         EN_US.put("economy.cashe.successful.target","You have bean credited with money in the amount %d %s");
         EN_US.put("economy.cashe.aborted","Transaction aborted: %s");
         LANGUAGES.put("en_us", EN_US);
-        // Здесь добавьте все текстовые сообщения на русском языке (ru_ru)
+
         RU_RU.put("startup.loggedIn","Вход по имененм %s выполнен");
         RU_RU.put("startup.info.transfer","Сервер зарегистрирован");
         RU_RU.put("server.stop","Сервер останавливается. Очистка ресурсов...");
@@ -51,7 +49,6 @@ public class Localizations {
         RU_RU.put("economy.cashe.successful.target","Вам начисленны средства в размере %d %s");
         RU_RU.put("economy.cashe.aborted","Транзакция не удалась: %s");
         LANGUAGES.put("ru_ru", RU_RU);
-        // Добавьте другие сообщения по мере необходимости
     }
 
     public static String getMessage(String key, String languageCode) throws IOException {
@@ -87,7 +84,7 @@ public class Localizations {
                         String msgValue = msgEntry.getValue();
                         sb.append(String.format("  \"%s\": \"%s\",\n", msgKey, msgValue));
                     }
-                    sb.deleteCharAt(sb.length() - 2); // Удаляем лишнюю запятую после последней строки
+                    sb.deleteCharAt(sb.length() - 2);
                     sb.append("}\n");
                     writer.write(sb.toString());
                 }
