@@ -81,7 +81,7 @@ public class SimpleCabinetMod implements ModInitializer {
 		if(CONFIG.sendDataOnStartup){
         String serverName = CONFIG.serverName;
         String serverFromServer = CONFIG.serverName;
-        api.adminPost("/servers/new", new ServerRequest(serverName, serverFromServer), ServersDto.class).getOrThrow();
+        api.adminPost("/servers/new", new ServerRequest(serverName, serverFromServer), ServerDto.class).getOrThrow();
 		LOGGER.info("Server info registered.");
 		loadLanguageFiles(CONFIG.language);
 		LOGGER.info("Language load");
@@ -100,7 +100,7 @@ public class SimpleCabinetMod implements ModInitializer {
 						Path configDir = FabricLoader.getInstance().getConfigDir();
 						Path lemonCabinetDir = configDir.resolve("LemonCabinet");
 						Path langDir = lemonCabinetDir.resolve("lang");
-						api.adminPost(String.format("/servers/name/%s/ping",CONFIG.serverName), new SimpleCabinetPing.PingRequest(currentPlayerCount,maxPlayerCount ,users ), ServersDto.PingResponseDto.class).getOrThrow();
+						api.adminPost(String.format("/servers/name/%s/ping",CONFIG.serverName), new SimpleCabinetPing.PingRequest(currentPlayerCount,maxPlayerCount ,users ), ServerDto.PingResponseDto.class).getOrThrow();
                         try {
                             player.sendMessage(Text.of(String.format(Localizations.getMessage("commands.ping.success", CONFIG.language), currentPlayerCount,users )));
                         } catch (IOException e) {
@@ -183,7 +183,7 @@ public class SimpleCabinetMod implements ModInitializer {
                         }
 						return 1;
 					})))))
-					.then(literal("cashe").requires(Permissions.require("economy.cashe"))
+					.then(literal("cache").requires(Permissions.require("economy.cache"))
 					.then(argument("user", EntityArgumentType.player())
 							.then(argument("amount", IntegerArgumentType.integer(1))
 									.then(argument("comment", StringArgumentType.string()).executes(context -> {
@@ -230,13 +230,13 @@ public class SimpleCabinetMod implements ModInitializer {
 			LOGGER.info("Send data to Api");
 			api.adminPost(String.format("/servers/name/%s/ping", CONFIG.serverName),
 					new SimpleCabinetPing.PingRequest(currentPlayerCount, maxPlayerCount, playerNames),
-					ServersDto.PingResponseDto.class).getOrThrow();
+					ServerDto.PingResponseDto.class).getOrThrow();
 		}
 	}
 
 	private void loadConfig() throws IOException {
 		Path configDir = FabricLoader.getInstance().getConfigDir();
-		Path lemonCabinetDir = configDir.resolve("LemonCabinet");
+		Path lemonCabinetDir = configDir.resolve("SimpleCabinet");
 		if (!Files.exists(lemonCabinetDir)) {
 			Files.createDirectories(lemonCabinetDir);
 		}
@@ -256,7 +256,7 @@ public class SimpleCabinetMod implements ModInitializer {
 
 	private void loadLanguageFiles(String languageCode) {
 		Path configDir = FabricLoader.getInstance().getConfigDir();
-		Path lemonCabinetDir = configDir.resolve("LemonCabinet");
+		Path lemonCabinetDir = configDir.resolve("SimpleCabinet");
 		Path langDir = lemonCabinetDir.resolve("lang");
 		Path langFile = langDir.resolve(languageCode + ".json");
 

@@ -1,10 +1,8 @@
 package simplecabinet.api.dto;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
-public class ServersDto {
+public class ServerDto {
     public final long id;
     public final String name;
     public final String displayName;
@@ -13,7 +11,7 @@ public class ServersDto {
     public final List<String> users;
     public final String updateDate;
 
-    public ServersDto(long id, String name, String displayName, int maxOnline, int online, List<String> users, String updateDate) {
+    public ServerDto(long id, String name, String displayName, int maxOnline, int online, List<String> users, String updateDate) {
         this.id = id;
         this.name = name;
         this.displayName = displayName;

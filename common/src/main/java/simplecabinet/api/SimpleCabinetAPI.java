@@ -107,19 +107,6 @@ public class SimpleCabinetAPI {
         this.token = token;
         this.gson = new GsonBuilder().create();
     }
-    public final class LocalDateTimeTypeAdapter implements JsonSerializer<LocalDateTime>, JsonDeserializer<LocalDateTime> {
-        private final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
-
-        @Override
-        public JsonElement serialize(LocalDateTime src, Type typeOfSrc, JsonSerializationContext context) {
-            return new JsonPrimitive(src.format(FORMATTER));
-        }
-
-        @Override
-        public LocalDateTime deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-            return LocalDateTime.parse(json.getAsString(), FORMATTER);
-        }
-    }
 
     public static class SimpleCabinetException extends RuntimeException {
         public SimpleCabinetException() {
